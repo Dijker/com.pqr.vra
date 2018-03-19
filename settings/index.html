@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+    <head>
+        <script type="text/javascript" src="/manager/webserver/assets/js/jquery.js"></script>
+        <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+    </head>
+    <body>
+
+        <h1 data-i18n="settings.title">vRa Settings</h1>
+        <p data-i18n="settings.intro">On this page you will be able to see current connection status and adjust the settings of this app.</p>
+
+        <p><span data-i18n="settings.status">Status</span>: <span id="vRa_status" style="font-weight: bold;">Unknown</span><br />
+           <span data-i18n="settings.last_poll.title">Last Poll</span>: <span id="vRa_lastPoll" data-i18n="settings.last_poll.waiting_for_event">... waiting for event...</span> <small data-i18n="settings.last_poll.poll_interval">(should update every 15 seconds)</small></p>
+
+        <p id="error" style="color: red;"></p>
+        <p id="success" style="color: #5fd225;"></p>
+
+        <fieldset>
+            <legend data-i18n="settings.fieldset.title"></legend>
+
+            <div class="field row">
+                <label for="vRa_host" data-i18n="settings.fieldset.host">Host</label>
+                <input id="vRa_host" type="text" value="" />
+            </div>
+            <div class="field row">
+                <label for="vRa_port" data-i18n="settings.fieldset.port">Port</label>
+                <input id="vRa_port" type="number" value="" min="1" max="65535" />
+            </div>
+            <div class="field row">
+                <label for="vRa_user" data-i18n="settings.fieldset.user">User</label>
+                <input id="vRa_user" type="text" value="" />
+            </div>
+            <div class="field row">
+                <label for="vRa_pass" data-i18n="settings.fieldset.pass">Pass</label>
+                <input id="vRa_pass" type="password" value="" />
+            </div>
+            <div class="field row">
+                <label for="vRa_tenant" data-i18n="settings.fieldset.site">tenant</label>
+                <input id="vRa_tenant" type="text" value="" />
+            </div>
+
+        </fieldset>
+
+        <button class="right" id="saver" data-i18n="settings.button.apply">Send</button>
+        <p><small data-i18n="settings.notice.restart">* If you just want to restart the connection, then click &quot;Apply&quot; again</small></p>
+        <p>
+
+        <fieldset>
+            <legend><span data-i18n="settings.debug.title">Debug messages</span> <small><a href="#" onclick='$(".debug").toggle(); return false;'>toggle</a></small></legend>
+
+            <div id="debug_container" class='debug' style='display: none;'>
+                <p data-i18n="settings.debug.intro">Up to 100 messages are shown below, in reverse order (newest on top):</p>
+                <div id="messages"></div>
+                <p><small data-i18n="settings.debug.wait_msg">Please wait for the events to come in</small></p>
+            </div>
+        </fieldset>
+
+        <script type="text/javascript">
+        function onHomeyReady(Homey){
+            var initializeSettings = function(err,data) {
+                if (err || !data) {
+                    document.getElementById('error').innerHTML = 'Loading settings failed, please load page again, or check app\'s running status';
+                    return;
+                }
+
+                document.getElementById('error').innerHTML = '';
+                document.getElementById('vRa_host').value = data['host'];
+                document.getElementById('vRa_port').value = data['port'];
+                document.getElementById('vRa_user').value = data['user'];
+                document.getElementById('vRa_pass').value = data['pass'];
+                document.getElementById('vRa_site').value = data['site'];
+            }
+
+            Homey.get('com.pqr.vra.settings', initializeSettings);
+            Homey.on('settings.set', ( key, data ) => {
+                if (key == 'com.pqr.vra.settings') {
+                    Homey.get('com.pqr.vra.settings', initializeSettings);
+                }
+            });
+
+            Homey.on( 'com.pqr.vra.lastPoll', function( data ){
+                document.getElementById('vRa_lastPoll').innerHTML = new Date(data.lastPoll).toLocaleString();
+            });
+
+            // Ready to show form now.
+            Homey.ready();
+
+            var appendDebugMessages = (err, data) => {
+                if (err) return appendDebugMessages(null, data);
+
+                $('#debug_container #messages').prepend('<pre>' + new Date().toLocaleString() + ' : ' + data.toString() + '</pre>');
+
+                $('#messages pre').each(function(index) {
+                    if (index >= 100) $(this).remove();
+                });
+            };
+
+            var updateStatusField =  (err, data) => {
+                if (err) {
+                    console.log(err);
+                    appendDebugMessages(err);
+                    return err;
+                }
+                var color = 'darkred';
+                if (data === 'Connected') color = 'darkgreen';
+                if (data === 'Connecting...') color = 'orange';
+
+                var statusField = document.getElementById('vRa_status');
+                statusField.style.color = color;
+
+                var translationKey = 'status.connection.' + data;
+                var translation = Homey.__(translationKey);
+
+                if (translation === translationKey || translation === '' || typeof translation === 'undefined') {
+                    statusField.innerHTML = data;
+                } else {
+                    statusField.innerHTML = translation;
+                }
+            }
+
+
+
+            Homey.get('com.pqr.vra.status', updateStatusField);
+            Homey.on('com.pqr.vra.status', ( data ) => { updateStatusField(null, data); });
+            Homey.on('com.pqr.vra.debug', ( data ) => { appendDebugMessages(null, data); });
+
+            // Save function
+            document.getElementById('saver').addEventListener('click', function(e) {
+
+                var button = document.getElementById('saver'),
+                    vRa_host = document.getElementById('vRa_host'),
+                    vRa_port = document.getElementById('vRa_port'),
+                    vRa_user = document.getElementById('vRa_user'),
+                    vRa_pass = document.getElementById('vRa_pass'),
+                    vRa_site = document.getElementById('vRa_site'),
+                    error = document.getElementById('error'),
+                    success = document.getElementById('success');
+                // Define update status
+
+                // Show message in the save button
+                // Set both disabled onSave
+                button.disabled = true;
+                success.innerHTML = __("settings.alert.changes-saved");
+                error.innerHTML = "";
+
+                var settings = {
+                    'host': vRa_host.value,
+                    'port': vRa_port.value,
+                    'user': vRa_user.value,
+                    'pass': vRa_pass.value,
+                    'tenant': vRa_tenant.value
+                }
+
+                // Change the settings in Homey.
+                // Homey.set('com.pqr.vra.settings', {
+                //     'host': vRa_host.value,
+                //     'port': vRa_port.value,
+                //     'user': vRa_user.value,
+                //     'pass': vRa_pass.value,
+                //     'tenant': vRa_tenant.value
+                // }, function( err ){
+                //     if( err ) return Homey.alert( err );
+                // });
+                Homey.api('PUT', '/settings', settings, function( err, result ) {
+                    if( err ) return Homey.alert(err);
+                });
+
+                // Return to edit mode after 3.5 seconds
+                setTimeout(function() {
+                    button.disabled = false;
+                    success.innerHTML = "";
+                    // updateSites();
+                },3500);
+            });
+
+        }
+        </script>
+
+    </body>
+</html>

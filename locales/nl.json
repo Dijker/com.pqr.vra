@@ -1,0 +1,46 @@
+{
+	"settings": {
+		"title": "vRa Instellingen",
+		"intro": "Op deze pagina kun je de verbindingsstatus bekijken en de instellingen aanpassen.",
+		"status": "Verbindingsstatus",
+		"last_poll": {
+			"title": "Laatste update",
+			"waiting_for_event": "... wachtend op volgende update ...",
+			"poll_interval": "(indien verbonden, update iedere 15 seconden)"
+		},
+		"fieldset": {
+			"title": "vRa Controller instellingen",
+			"host": "Host",
+			"port": "Poort",
+			"user": "Gebruikersnaam",
+			"pass": "Wachtwoord",
+			"site": "Tennant"
+		},
+		"button": {
+			"apply": "Toepassen"
+		},
+		"notice": {
+			"restart": "* Als je alleen de connectie wilt herstarten, klik dan de knop &quot;Toepassen&quot; nogmaals."
+		},
+		"siteid": {
+			"pre_msg": "Als je het SiteID niet weet, probeer dan onderstaande lijst:",
+			"post_msg": "(als credentials het toestaan, is deze lijst actueel)"
+		},
+		"debug": {
+			"title": "Debug meldingen",
+			"intro": "De laatste 100 meldingen worden hieronder weergegeven; nieuwste meldingen bovenaan:",
+			"wait_msg": "Meldingen komen vanzelf binnen..."
+		},
+		"alert": {
+			"changes-saved": "Instellingen toegepast, verbinding wordt opgezet."
+		}
+	},
+	"status": {
+		"connection": {
+			"Connected": "Verbonden",
+			"Connecting": "Bezig met verbinden...",
+			"Disconnected": "Verbinding verbroken",
+			"Initialized": "Bezig met starten"
+		}
+	}
+}
